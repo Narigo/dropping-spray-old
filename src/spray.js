@@ -1,5 +1,10 @@
+var DrawShapes = require('./draw_shapes.js');
 var defaultOptions = {
-  color : 'rgb(0, 0, 255)',
+  color : {
+    r : 0,
+    g : 0,
+    b : 255
+  },
   size : 5,
 
   splatterAmount : 10,
@@ -22,13 +27,12 @@ function Spray(options) {
   var canvas = opts.canvas;
   var dropFns = [];
   var drops = [];
-  var ctx = canvas.getContext('2d');
 
   initializeDropCounter();
 
   return {
     sprayAt : sprayAt,
-    renderDrops : renderDrops,
+    getDrops : getDrops,
     resetDrops : initializeDropCounter
   };
 
@@ -41,25 +45,20 @@ function Spray(options) {
     }
   }
 
-  function renderDrops() {
+  function getDrops() {
+    var dropLines = new DrawShapes.Lines(color.r, color.g, color.b);
+
     if (dropper) {
-      ctx.save();
-      ctx.beginPath();
-      ctx.strokeStyle = color;
-      ctx.fillStyle = color;
-      ctx.lineCap = 'round';
-      var amount = dropFns.length - 1;
-      for (var i = amount; i >= 0; i--) {
-        if (dropFns[i]) {
-          dropFns[i](i);
-        }
+      var amount = dropFns.length;
+      for (var i = amount - 1; i >= 0; i--) {
+        dropFns[i](i, dropLines.shapes);
       }
-      ctx.stroke();
-      ctx.fill();
-      ctx.restore();
     }
 
-    return (amount >= 0);
+    return {
+      amount : amount,
+      lines : dropLines
+    };
   }
 
   function initializeDropCounter() {
@@ -76,20 +75,19 @@ function Spray(options) {
     }
   }
 
-  function filledCircle(x, y, radius) {
-    ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
+  function filledCircle(circleShapes, x, y, radius) {
+    circleShapes.push(DrawShapes.circle(x, y, radius));
   }
 
   function dropAt(x, y, initialDrop) {
     var maxY = drops[x].length - 1;
-    var myDrop = initialDrop;
 
-    dropFns.push(createDropFnFor(maxY, x, y, myDrop));
+    dropFns.push(createDropFnFor(maxY, x, y, initialDrop));
   }
 
   function createDropFnFor(maxY, x, y, myDrop) {
-    return function (idx) {
-      var deltaWidth, deltaX, otherDrop;
+    return function (idx, shapesArray) {
+      var deltaWidth, deltaX, nextY, otherDrop;
 
       if (myDrop.count <= 0) {
         myDrop.count = 0;
@@ -102,21 +100,19 @@ function Spray(options) {
           deltaX = Math.floor(Math.random() * 3) - 1;
 
           // drop next step
-          ctx.lineWidth = myDrop.width;
-          ctx.moveTo(x * size, y * size);
-
-          y = y + 1;
-          otherDrop = drops[x][y];
+          nextY = y + 1;
+          otherDrop = drops[x][nextY];
           if (!otherDrop.drops) {
             otherDrop.drops = true;
             myDrop.count = myDrop.count - myDrop.width;
           }
           otherDrop.count += myDrop.count;
           otherDrop.width = Math.max(Math.max(1, myDrop.width + deltaWidth), otherDrop.width);
-          ctx.lineTo((x * size) + deltaX, y * size);
+          shapesArray.push(DrawShapes.line(x * size, y * size, (x * size) + deltaX, nextY * size, myDrop.width));
 
           myDrop.count = 0;
           myDrop = otherDrop;
+          y = nextY;
         } else {
           myDrop.count = myDrop.count + size;
         }
@@ -138,24 +134,21 @@ function Spray(options) {
         dropAt(xArea, yArea, drop);
       }
     }
-    ctx.save();
-    ctx.fillStyle = color;
-    filledCircle(x, y, size);
-    drawCirclesAround(x, y);
-    ctx.restore();
+    var circles = new DrawShapes.Circles(color.r, color.g, color.b);
+    filledCircle(circles.shapes, x, y, size);
+    drawCirclesAround(circles.shapes, x, y);
+    return circles;
   }
 
-  function drawCirclesAround(x, y) {
+  function drawCirclesAround(circleShapes, x, y) {
     var dx, dy, r, s, t;
     for (var i = splatterAmount; i > 0; i--) {
-      ctx.beginPath();
       t = Math.random() * 2 * Math.PI;
       r = Math.random();
       dx = r * Math.cos(t) * splatterRadius;
       dy = r * Math.sin(t) * splatterRadius;
       s = 1 - (Math.sqrt(dx * dx + dy * dy) / splatterRadius);
-      filledCircle(x + dx, y + dy, size * s);
-      ctx.fill();
+      filledCircle(circleShapes, x + dx, y + dy, size * s);
     }
   }
 }

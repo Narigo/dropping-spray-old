@@ -1,5 +1,8 @@
 var Spray = require('./spray.js');
+var CanvasDrawer = require('./canvas_drawer.js');
+
 var canvas = document.getElementById('spray1');
+var drawer = new CanvasDrawer(canvas);
 
 var spray;
 var spraying = false;
@@ -43,7 +46,11 @@ function createSpray() {
   var g = fieldBetween(form.green, 0, 255);
   var b = fieldBetween(form.blue, 0, 255);
   var options = {
-    color : 'rgb(' + r + ',' + g + ',' + b + ')',
+    color : {
+      r : r,
+      g : g,
+      b : b
+    },
     canvas : canvas,
     size : fieldBetween(form.size, 1, Math.min(canvas.height, canvas.width)),
     splatterAmount : fieldBetween(form.splatterAmount, 0, Infinity),
@@ -68,10 +75,26 @@ function stopSpraying() {
 }
 
 function render() {
+  var sprayedCircles, dropLines;
+  var requestsAnimFrame = false;
   if (spraying) {
-    spray.sprayAt(mouseX, mouseY);
+    sprayedCircles = spray.sprayAt(mouseX, mouseY);
   }
-  requestsAnimFrame = spray.renderDrops() || spraying;
+  var al = spray.getDrops();
+  var amount = al.amount;
+  dropLines = al.lines;
+
+  if (sprayedCircles && !sprayedCircles.isEmpty()) {
+    requestsAnimFrame = true;
+    drawer.drawShapes(sprayedCircles);
+  }
+
+  if (dropLines && !dropLines.isEmpty() || amount > 0) {
+    requestsAnimFrame = true;
+    drawer.drawShapes(dropLines);
+  }
+
+  requestsAnimFrame = requestsAnimFrame || spraying;
 
   if (requestsAnimFrame) {
     requestAnimationFrame(render);
@@ -137,16 +160,12 @@ function setupForm() {
     autoSpraySpeed = parseInt(form.autoSpraySpeed.value);
   });
 
-  document.getElementById('clearCanvas').addEventListener('click', function() {
+  document.getElementById('clearCanvas').addEventListener('click', function () {
     resetSpray();
-    var ctx = canvas.getContext('2d');
-    ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.restore();
+    drawer.clear();
   });
 
-  document.getElementById('randomColor').addEventListener('click', function() {
+  document.getElementById('randomColor').addEventListener('click', function () {
     randomizeColor();
     resetSpray();
   });
@@ -161,8 +180,8 @@ function setupForm() {
       x = x + Math.round(Math.random() * Math.max(0, autoSpraySpeed));
       y = Math.max(0, Math.min(canvas.height - 1, (y + Math.floor(Math.random() * 3) - 1)));
       if (x < canvas.width) {
-        spray.sprayAt(x, y);
-        spray.renderDrops();
+        drawer.drawShapes(spray.sprayAt(x, y));
+        drawer.drawShapes(spray.getDrops().lines);
         requestAnimationFrame(sprayFromLeftToRight);
       } else {
         console.log('auto spray done');

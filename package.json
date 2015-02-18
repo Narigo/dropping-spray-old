@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "A spray that drops",
   "scripts": {
-    "build": "browserify main.js -o bundle.js"
+    "build": "browserify src/main.js -o bundle.js"
   },
   "repository": {
     "type": "git",

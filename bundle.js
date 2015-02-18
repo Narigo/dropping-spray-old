@@ -1,6 +1,128 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+function CanvasDrawer(canvas) {
+  var ctx = canvas.getContext('2d');
+
+  return {
+    drawShapes : drawShapes,
+    clear : clearCanvas
+  };
+
+  function clearCanvas() {
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+  }
+
+  function drawShapes(shapesToRender) {
+    var colorString, i, shape, shapes;
+    if (!shapesToRender.isEmpty()) {
+      shapes = shapesToRender.shapes;
+      colorString = getRgbString(shapesToRender.color.r, shapesToRender.color.g, shapesToRender.color.b);
+      ctx.fillStyle = colorString;
+      if (shapesToRender.shape === 'line') {
+        for (i = shapes.length - 1; i >= 0; i--) {
+          shape = shapes[i];
+          ctx.strokeStyle = colorString;
+          ctx.lineCap = 'round';
+          ctx.lineWidth = shape.size;
+          linePath(shape.x0, shape.y0, shape.x1, shape.y1);
+        }
+        ctx.stroke();
+      } else if (shapesToRender.shape === 'circle') {
+        for (i = shapes.length - 1; i >= 0; i--) {
+          shape = shapes[i];
+          ctx.beginPath();
+          circlePath(shape.x, shape.y, shape.radius);
+          ctx.fill();
+        }
+      }
+    }
+  }
+
+  function linePath(x0, y0, x1, y1) {
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+  }
+
+  function circlePath(x, y, radius) {
+    ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
+  }
+}
+
+function getRgbString(red, green, blue) {
+  var rgb = 'rgb(';
+  rgb += red;
+  rgb += ',';
+  rgb += green;
+  rgb += ',';
+  rgb += blue;
+  rgb += ')';
+  return rgb;
+}
+
+module.exports = CanvasDrawer;
+
+},{}],2:[function(require,module,exports){
+function Circles(red, green, blue) {
+  var that = this;
+  this.shape = 'circle';
+  this.color = {
+    r : red,
+    g : green,
+    b : blue
+  };
+  this.shapes = [];
+  this.isEmpty = function () {
+    return that.shapes.length === 0;
+  };
+}
+
+function Lines(red, green, blue) {
+  var that = this;
+  this.shape = 'line';
+  this.color = {
+    r : red,
+    g : green,
+    b : blue
+  };
+  this.shapes = [];
+  this.isEmpty = function () {
+    return that.shapes.length === 0;
+  };
+}
+
+function circle(x, y, radius) {
+  return {
+    x : x,
+    y : y,
+    radius : radius
+  };
+}
+
+function line(x0, y0, x1, y1, size) {
+  return {
+    size : size,
+    x0 : x0,
+    y0 : y0,
+    x1 : x1,
+    y1 : y1
+  };
+}
+
+module.exports = {
+  circle : circle,
+  line : line,
+  Circles : Circles,
+  Lines : Lines
+};
+
+},{}],3:[function(require,module,exports){
 var Spray = require('./spray.js');
+var CanvasDrawer = require('./canvas_drawer.js');
+
 var canvas = document.getElementById('spray1');
+var drawer = new CanvasDrawer(canvas);
 
 var spray;
 var spraying = false;
@@ -44,7 +166,11 @@ function createSpray() {
   var g = fieldBetween(form.green, 0, 255);
   var b = fieldBetween(form.blue, 0, 255);
   var options = {
-    color : 'rgb(' + r + ',' + g + ',' + b + ')',
+    color : {
+      r : r,
+      g : g,
+      b : b
+    },
     canvas : canvas,
     size : fieldBetween(form.size, 1, Math.min(canvas.height, canvas.width)),
     splatterAmount : fieldBetween(form.splatterAmount, 0, Infinity),
@@ -69,10 +195,26 @@ function stopSpraying() {
 }
 
 function render() {
+  var sprayedCircles, dropLines;
+  var requestsAnimFrame = false;
   if (spraying) {
-    spray.sprayAt(mouseX, mouseY);
+    sprayedCircles = spray.sprayAt(mouseX, mouseY);
   }
-  requestsAnimFrame = spray.renderDrops() || spraying;
+  var al = spray.getDrops();
+  var amount = al.amount;
+  dropLines = al.lines;
+
+  if (sprayedCircles && !sprayedCircles.isEmpty()) {
+    requestsAnimFrame = true;
+    drawer.drawShapes(sprayedCircles);
+  }
+
+  if (dropLines && !dropLines.isEmpty() || amount > 0) {
+    requestsAnimFrame = true;
+    drawer.drawShapes(dropLines);
+  }
+
+  requestsAnimFrame = requestsAnimFrame || spraying;
 
   if (requestsAnimFrame) {
     requestAnimationFrame(render);
@@ -138,16 +280,12 @@ function setupForm() {
     autoSpraySpeed = parseInt(form.autoSpraySpeed.value);
   });
 
-  document.getElementById('clearCanvas').addEventListener('click', function() {
+  document.getElementById('clearCanvas').addEventListener('click', function () {
     resetSpray();
-    var ctx = canvas.getContext('2d');
-    ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.restore();
+    drawer.clear();
   });
 
-  document.getElementById('randomColor').addEventListener('click', function() {
+  document.getElementById('randomColor').addEventListener('click', function () {
     randomizeColor();
     resetSpray();
   });
@@ -162,8 +300,8 @@ function setupForm() {
       x = x + Math.round(Math.random() * Math.max(0, autoSpraySpeed));
       y = Math.max(0, Math.min(canvas.height - 1, (y + Math.floor(Math.random() * 3) - 1)));
       if (x < canvas.width) {
-        spray.sprayAt(x, y);
-        spray.renderDrops();
+        drawer.drawShapes(spray.sprayAt(x, y));
+        drawer.drawShapes(spray.getDrops().lines);
         requestAnimationFrame(sprayFromLeftToRight);
       } else {
         console.log('auto spray done');
@@ -180,9 +318,14 @@ function setupForm() {
   randomizeColor();
 }
 
-},{"./spray.js":2}],2:[function(require,module,exports){
+},{"./canvas_drawer.js":1,"./spray.js":4}],4:[function(require,module,exports){
+var DrawShapes = require('./draw_shapes.js');
 var defaultOptions = {
-  color : 'rgb(0, 0, 255)',
+  color : {
+    r : 0,
+    g : 0,
+    b : 255
+  },
   size : 5,
 
   splatterAmount : 10,
@@ -205,13 +348,12 @@ function Spray(options) {
   var canvas = opts.canvas;
   var dropFns = [];
   var drops = [];
-  var ctx = canvas.getContext('2d');
 
   initializeDropCounter();
 
   return {
     sprayAt : sprayAt,
-    renderDrops : renderDrops,
+    getDrops : getDrops,
     resetDrops : initializeDropCounter
   };
 
@@ -224,25 +366,20 @@ function Spray(options) {
     }
   }
 
-  function renderDrops() {
+  function getDrops() {
+    var dropLines = new DrawShapes.Lines(color.r, color.g, color.b);
+
     if (dropper) {
-      ctx.save();
-      ctx.beginPath();
-      ctx.strokeStyle = color;
-      ctx.fillStyle = color;
-      ctx.lineCap = 'round';
-      var amount = dropFns.length - 1;
-      for (var i = amount; i >= 0; i--) {
-        if (dropFns[i]) {
-          dropFns[i](i);
-        }
+      var amount = dropFns.length;
+      for (var i = amount - 1; i >= 0; i--) {
+        dropFns[i](i, dropLines.shapes);
       }
-      ctx.stroke();
-      ctx.fill();
-      ctx.restore();
     }
 
-    return (amount >= 0);
+    return {
+      amount : amount,
+      lines : dropLines
+    };
   }
 
   function initializeDropCounter() {
@@ -259,20 +396,19 @@ function Spray(options) {
     }
   }
 
-  function filledCircle(x, y, radius) {
-    ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
+  function filledCircle(circleShapes, x, y, radius) {
+    circleShapes.push(DrawShapes.circle(x, y, radius));
   }
 
   function dropAt(x, y, initialDrop) {
     var maxY = drops[x].length - 1;
-    var myDrop = initialDrop;
 
-    dropFns.push(createDropFnFor(maxY, x, y, myDrop));
+    dropFns.push(createDropFnFor(maxY, x, y, initialDrop));
   }
 
   function createDropFnFor(maxY, x, y, myDrop) {
-    return function (idx) {
-      var deltaWidth, deltaX, otherDrop;
+    return function (idx, shapesArray) {
+      var deltaWidth, deltaX, nextY, otherDrop;
 
       if (myDrop.count <= 0) {
         myDrop.count = 0;
@@ -285,21 +421,19 @@ function Spray(options) {
           deltaX = Math.floor(Math.random() * 3) - 1;
 
           // drop next step
-          ctx.lineWidth = myDrop.width;
-          ctx.moveTo(x * size, y * size);
-
-          y = y + 1;
-          otherDrop = drops[x][y];
+          nextY = y + 1;
+          otherDrop = drops[x][nextY];
           if (!otherDrop.drops) {
             otherDrop.drops = true;
             myDrop.count = myDrop.count - myDrop.width;
           }
           otherDrop.count += myDrop.count;
           otherDrop.width = Math.max(Math.max(1, myDrop.width + deltaWidth), otherDrop.width);
-          ctx.lineTo((x * size) + deltaX, y * size);
+          shapesArray.push(DrawShapes.line(x * size, y * size, (x * size) + deltaX, nextY * size, myDrop.width));
 
           myDrop.count = 0;
           myDrop = otherDrop;
+          y = nextY;
         } else {
           myDrop.count = myDrop.count + size;
         }
@@ -321,24 +455,21 @@ function Spray(options) {
         dropAt(xArea, yArea, drop);
       }
     }
-    ctx.save();
-    ctx.fillStyle = color;
-    filledCircle(x, y, size);
-    drawCirclesAround(x, y);
-    ctx.restore();
+    var circles = new DrawShapes.Circles(color.r, color.g, color.b);
+    filledCircle(circles.shapes, x, y, size);
+    drawCirclesAround(circles.shapes, x, y);
+    return circles;
   }
 
-  function drawCirclesAround(x, y) {
+  function drawCirclesAround(circleShapes, x, y) {
     var dx, dy, r, s, t;
     for (var i = splatterAmount; i > 0; i--) {
-      ctx.beginPath();
       t = Math.random() * 2 * Math.PI;
       r = Math.random();
       dx = r * Math.cos(t) * splatterRadius;
       dy = r * Math.sin(t) * splatterRadius;
       s = 1 - (Math.sqrt(dx * dx + dy * dy) / splatterRadius);
-      filledCircle(x + dx, y + dy, size * s);
-      ctx.fill();
+      filledCircle(circleShapes, x + dx, y + dy, size * s);
     }
   }
 }
@@ -346,4 +477,4 @@ function Spray(options) {
 
 module.exports = Spray;
 
-},{}]},{},[1]);
+},{"./draw_shapes.js":2}]},{},[3]);
