@@ -75,28 +75,16 @@ function stopSpraying() {
 }
 
 function render() {
-  var sprayedCircles, dropLines;
-  var requestsAnimFrame = false;
+  var isDrawing;
   if (spraying) {
-    sprayedCircles = spray.sprayAt(mouseX, mouseY);
+    isDrawing = spray.draw(drawer, {
+      x : mouseX,
+      y : mouseY
+    });
+  } else {
+    isDrawing = spray.draw(drawer);
   }
-  var al = spray.getDrops();
-  var amount = al.amount;
-  dropLines = al.lines;
-
-  if (sprayedCircles && !sprayedCircles.isEmpty()) {
-    requestsAnimFrame = true;
-    drawer.drawShapes(sprayedCircles);
-  }
-
-  if (dropLines && !dropLines.isEmpty() || amount > 0) {
-    requestsAnimFrame = true;
-    drawer.drawShapes(dropLines);
-  }
-
-  requestsAnimFrame = requestsAnimFrame || spraying;
-
-  if (requestsAnimFrame) {
+  if (isDrawing) {
     requestAnimationFrame(render);
   }
 }
@@ -180,8 +168,7 @@ function setupForm() {
       x = x + Math.round(Math.random() * Math.max(0, autoSpraySpeed));
       y = Math.max(0, Math.min(canvas.height - 1, (y + Math.floor(Math.random() * 3) - 1)));
       if (x < canvas.width) {
-        drawer.drawShapes(spray.sprayAt(x, y));
-        drawer.drawShapes(spray.getDrops().lines);
+        spray.draw(drawer, {x: x, y: y});
         requestAnimationFrame(sprayFromLeftToRight);
       } else {
         console.log('auto spray done');

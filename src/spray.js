@@ -31,8 +31,7 @@ function Spray(options) {
   initializeDropCounter();
 
   return {
-    sprayAt : sprayAt,
-    getDrops : getDrops,
+    draw : draw,
     resetDrops : initializeDropCounter
   };
 
@@ -43,6 +42,32 @@ function Spray(options) {
     } else {
       return defaultOptions[name];
     }
+  }
+
+  function draw(drawer, sprayCoords) {
+    var al, amount, sprayedCircles, dropLines;
+    var spraying = !!sprayCoords;
+    var isDropping = false;
+
+    if (spraying) {
+      sprayedCircles = sprayAt(sprayCoords.x, sprayCoords.y);
+    }
+
+    al = getDrops();
+    amount = al.amount;
+    dropLines = al.lines;
+
+    if (sprayedCircles && !sprayedCircles.isEmpty()) {
+      isDropping = true;
+      drawer.drawShapes(sprayedCircles);
+    }
+
+    if (dropLines && !dropLines.isEmpty() || amount > 0) {
+      isDropping = true;
+      drawer.drawShapes(dropLines);
+    }
+
+    return isDropping || spraying;
   }
 
   function getDrops() {
