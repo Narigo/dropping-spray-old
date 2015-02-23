@@ -7,8 +7,10 @@ var drawer = new CanvasDrawer(canvas);
 var spray;
 var spraying = false;
 
-var mouseX = 0;
-var mouseY = 0;
+var sprayCoords = {
+  x : 0,
+  y : 0
+};
 var requestsAnimFrame = false;
 
 var startEventCanvas = downEvent(canvas, function () {
@@ -77,10 +79,7 @@ function stopSpraying() {
 function render() {
   var isDrawing;
   if (spraying) {
-    isDrawing = spray.draw(drawer, {
-      x : mouseX,
-      y : mouseY
-    });
+    isDrawing = spray.draw(drawer, sprayCoords);
   } else {
     isDrawing = spray.draw(drawer);
   }
@@ -96,11 +95,11 @@ function downEvent(canvas, cb) {
     var touchList = event.touches;
     if (touchList) {
       var touch = touchList[0];
-      mouseX = parseInt(touch.pageX) - canvas.offsetLeft;
-      mouseY = parseInt(touch.pageY) - canvas.offsetTop;
+      sprayCoords.x = parseInt(touch.pageX) - canvas.offsetLeft;
+      sprayCoords.y = parseInt(touch.pageY) - canvas.offsetTop;
     } else {
-      mouseX = event.pageX - canvas.offsetLeft;
-      mouseY = event.pageY - canvas.offsetTop;
+      sprayCoords.x = event.pageX - canvas.offsetLeft;
+      sprayCoords.y = event.pageY - canvas.offsetTop;
     }
     if (cb) {
       cb();
@@ -159,16 +158,18 @@ function setupForm() {
   });
   document.getElementById('autoSpray').addEventListener('click', function () {
     resetSpray();
-    var x = 0;
-    var y = Math.floor(Math.random() * canvas.height);
+    var autoSprayCoords = {
+      x : 0,
+      y : Math.floor(Math.random() * canvas.height)
+    };
 
     sprayFromLeftToRight();
 
     function sprayFromLeftToRight() {
-      x = x + Math.round(Math.random() * Math.max(0, autoSpraySpeed));
-      y = Math.max(0, Math.min(canvas.height - 1, (y + Math.floor(Math.random() * 3) - 1)));
-      if (x < canvas.width) {
-        spray.draw(drawer, {x: x, y: y});
+      autoSprayCoords.x = autoSprayCoords.x + Math.round(Math.random() * Math.max(0, autoSpraySpeed));
+      autoSprayCoords.y = Math.max(0, Math.min(canvas.height - 1, (autoSprayCoords.y + Math.floor(Math.random() * 3) - 1)));
+      if (autoSprayCoords.x < canvas.width) {
+        spray.draw(drawer, autoSprayCoords);
         requestAnimationFrame(sprayFromLeftToRight);
       } else {
         console.log('auto spray done');
