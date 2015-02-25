@@ -32,7 +32,8 @@ function Spray(options) {
 
   return {
     draw : draw,
-    resetDrops : initializeDropCounter
+    resetDrops : initializeDropCounter,
+    stopDrops : stopCurrentDrops
   };
 
   function getOpt(name) {
@@ -84,6 +85,10 @@ function Spray(options) {
       amount : amount,
       lines : dropLines
     };
+  }
+
+  function stopCurrentDrops() {
+    dropFns = [];
   }
 
   function initializeDropCounter() {

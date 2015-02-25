@@ -126,15 +126,20 @@ var drawer = new CanvasDrawer(canvas);
 
 var spray;
 var spraying = false;
+var autoSprays = [];
 
-var mouseX = 0;
-var mouseY = 0;
-var requestsAnimFrame = false;
+var sprayCoords = {
+  x : 0,
+  y : 0
+};
+var requestingAnimationFrame = false;
 
 var startEventCanvas = downEvent(canvas, function () {
   spraying = true;
-  requestsAnimFrame = true;
-  render();
+  if (!requestingAnimationFrame) {
+    requestingAnimationFrame = true;
+    render();
+  }
 });
 var moveEventCanvas = downEvent(canvas);
 
@@ -197,15 +202,19 @@ function stopSpraying() {
 function render() {
   var isDrawing;
   if (spraying) {
-    isDrawing = spray.draw(drawer, {
-      x : mouseX,
-      y : mouseY
-    });
+    isDrawing = spray.draw(drawer, sprayCoords);
   } else {
     isDrawing = spray.draw(drawer);
   }
+
+  [].forEach.call(autoSprays, function (autoSpray) {
+    isDrawing = autoSpray.draw(drawer) || isDrawing;
+  });
+
   if (isDrawing) {
     requestAnimationFrame(render);
+  } else {
+    requestingAnimationFrame = false;
   }
 }
 
@@ -216,11 +225,11 @@ function downEvent(canvas, cb) {
     var touchList = event.touches;
     if (touchList) {
       var touch = touchList[0];
-      mouseX = parseInt(touch.pageX) - canvas.offsetLeft;
-      mouseY = parseInt(touch.pageY) - canvas.offsetTop;
+      sprayCoords.x = parseInt(touch.pageX) - canvas.offsetLeft;
+      sprayCoords.y = parseInt(touch.pageY) - canvas.offsetTop;
     } else {
-      mouseX = event.pageX - canvas.offsetLeft;
-      mouseY = event.pageY - canvas.offsetTop;
+      sprayCoords.x = event.pageX - canvas.offsetLeft;
+      sprayCoords.y = event.pageY - canvas.offsetTop;
     }
     if (cb) {
       cb();
@@ -270,28 +279,50 @@ function setupForm() {
 
   document.getElementById('clearCanvas').addEventListener('click', function () {
     resetSpray();
+    [].forEach.call(autoSprays, function (autoSpray) {
+      autoSpray.spray.stopDrops();
+      autoSpray.spray.resetDrops();
+    });
     drawer.clear();
+  });
+
+  document.getElementById('autoSprayStop').addEventListener('click', function () {
+    [].forEach.call(autoSprays, function (autoSpray) {
+      autoSpray.spray.stopDrops();
+    });
+    autoSprays = [];
   });
 
   document.getElementById('randomColor').addEventListener('click', function () {
     randomizeColor();
     resetSpray();
   });
+
   document.getElementById('autoSpray').addEventListener('click', function () {
-    resetSpray();
-    var x = 0;
-    var y = Math.floor(Math.random() * canvas.height);
+    var autoSprayCoords = {
+      x : 0,
+      y : Math.floor(Math.random() * canvas.height)
+    };
+    var autoSpray = {
+      draw : sprayFromLeftToRight,
+      spray : createSpray()
+    };
+    autoSprays.push(autoSpray);
+    if (!requestingAnimationFrame) {
+      requestingAnimationFrame = true;
+      render();
+    }
 
-    sprayFromLeftToRight();
-
-    function sprayFromLeftToRight() {
-      x = x + Math.round(Math.random() * Math.max(0, autoSpraySpeed));
-      y = Math.max(0, Math.min(canvas.height - 1, (y + Math.floor(Math.random() * 3) - 1)));
-      if (x < canvas.width) {
-        spray.draw(drawer, {x: x, y: y});
-        requestAnimationFrame(sprayFromLeftToRight);
+    function sprayFromLeftToRight(drawer) {
+      autoSprayCoords.x = autoSprayCoords.x + Math.round(Math.random() * Math.max(0, autoSpraySpeed));
+      autoSprayCoords.y =
+        Math.max(0, Math.min(canvas.height - 1, (autoSprayCoords.y + Math.floor(Math.random() * 3) - 1)));
+      if (autoSprayCoords.x < canvas.width) {
+        autoSpray.spray.draw(drawer, autoSprayCoords);
+        return true;
       } else {
-        console.log('auto spray done');
+        autoSprays.splice(autoSprays.indexOf(autoSpray), 1);
+        return false;
       }
     }
   });
@@ -340,7 +371,8 @@ function Spray(options) {
 
   return {
     draw : draw,
-    resetDrops : initializeDropCounter
+    resetDrops : initializeDropCounter,
+    stopDrops : stopCurrentDrops
   };
 
   function getOpt(name) {
@@ -392,6 +424,10 @@ function Spray(options) {
       amount : amount,
       lines : dropLines
     };
+  }
+
+  function stopCurrentDrops() {
+    dropFns = [];
   }
 
   function initializeDropCounter() {
