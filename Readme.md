@@ -56,7 +56,7 @@ left. The `draw` method will tell us, whether the spray has some drops left to r
 A typical `requestAnimationFrame` could look like this:
 
 ```
-var spraying = true; // sprays at a
+var spraying = true; // sprays at a specific coordinate (see render() method)
 var currentCoords = { x : 0, y : 0 }; // the coordinates where to draw, if spraying
 
 function render() {
