@@ -25,8 +25,8 @@ var moveEventCanvas = downEvent(canvas);
 
 var form = document.getElementById('options');
 
-canvas.height = document.getElementById('spray1').offsetHeight;
-canvas.width = window.innerWidth;
+window.addEventListener('resize', resize);
+resize();
 
 canvas.addEventListener('mousedown', startEventCanvas);
 canvas.addEventListener('mousemove', moveEventCanvas);
@@ -115,6 +115,11 @@ function downEvent(canvas, cb) {
       cb();
     }
   };
+}
+
+function resize() {
+  canvas.height = document.getElementById('spray1').offsetHeight;
+  canvas.width = window.innerWidth;
 }
 
 function setupOptions() {
