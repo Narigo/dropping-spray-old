@@ -1,67 +1,42 @@
-describe('The canvas painter', function () {
+describe('Spray', function () {
 
-  var CanvasDrawer = require('../src/canvas_drawer.js');
-  var Shapes = require('../src/draw_shapes.js');
-  var canvas = document.createElement('canvas');
-  canvas.width = 100;
-  canvas.height = 100;
-  var ctx = canvas.getContext('2d');
-  var image = document.createElement('img');
-  var painter = new CanvasDrawer(canvas);
+  var Spray = require('../src/spray.js');
+  var splatterAmount = 33;
+  var canvas = {
+    width: 100,
+    height: 100
+  };
+  var spray = new Spray({
+    splatterAmount : splatterAmount,
+    canvas : canvas
+  });
+  var DrawerMock;
 
-  it('should be able to draw a single line', function () {
-    var line = Shapes.line(0, 0, 50, 50, 10);
-    var lines = new Shapes.Lines(255, 0, 0);
-    lines.shapes.push(line);
-    painter.drawShapes(lines);
+  beforeEach(function () {
+    DrawerMock = (function () {
+      var circles = 0;
+      var lines = 0;
+      return {
+        drawShapes : function (shapes) {
+          if (shapes.shape === 'circle') {
+            circles += shapes.shapes.length;
+          } else if (shapes.shape === 'line') {
+            lines += shapes.shapes.length;
+          }
+        },
+        amountOfCircles : function () {
+          return circles;
+        },
+        amountOfLines : function () {
+          return lines;
+        }
+      };
+    }());
   });
 
-  it('should be able to draw multiple lines', function () {
-    var line1 = Shapes.line(10, 20, 10, 80, 5);
-    var line2 = Shapes.line(20, 10, 20, 90, 5);
-    var line3 = Shapes.line(30, 20, 30, 80, 5);
-    var lines = new Shapes.Lines(255, 0, 0);
-    lines.shapes.push(line1);
-    lines.shapes.push(line2);
-    lines.shapes.push(line3);
-    painter.drawShapes(lines);
-  });
-
-  it('should be able to draw a single circle', function () {
-    var circle1 = Shapes.circle(50, 50, 10);
-    var circles = new Shapes.Circles(255, 0, 0);
-    circles.shapes.push(circle1);
-    painter.drawShapes(circles);
-  });
-
-  it('should be able to draw multiple circles', function () {
-    var circle1 = Shapes.circle(30, 30, 10);
-    var circle3 = Shapes.circle(50, 50, 10);
-    var circle2 = Shapes.circle(70, 70, 10);
-    var circles = new Shapes.Circles(255, 0, 0);
-    circles.shapes.push(circle1);
-    circles.shapes.push(circle2);
-    circles.shapes.push(circle3);
-    painter.drawShapes(circles);
-  });
-
-  it('should be able to draw multiple lines and circles', function () {
-    var line1 = Shapes.line(10, 20, 10, 80, 5);
-    var line2 = Shapes.line(20, 10, 20, 90, 5);
-    var line3 = Shapes.line(30, 20, 30, 80, 5);
-    var lines = new Shapes.Lines(255, 0, 0);
-    lines.shapes.push(line1);
-    lines.shapes.push(line2);
-    lines.shapes.push(line3);
-    var circle1 = Shapes.circle(30, 30, 10);
-    var circle3 = Shapes.circle(50, 50, 10);
-    var circle2 = Shapes.circle(70, 70, 10);
-    var circles = new Shapes.Circles(255, 0, 0);
-    circles.shapes.push(circle1);
-    circles.shapes.push(circle2);
-    circles.shapes.push(circle3);
-    painter.drawShapes(lines);
-    painter.drawShapes(circles);
+  it('should draw the same amount of circles as put into options', function () {
+    spray.draw(DrawerMock, {x : 50, y : 50});
+    expect(DrawerMock.amountOfCircles()).toBe(splatterAmount + 1);
   });
 
 });
