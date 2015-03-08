@@ -158,7 +158,7 @@ function Spray(options) {
     var drop = drops[xArea][yArea];
     if (dropper) {
       drop.count += size;
-      if (drop.count > dropThreshold) {
+      if (drop.count >= dropThreshold) {
         drop.drops = true;
         drop.width = size;
         dropAt(xArea, yArea, drop);

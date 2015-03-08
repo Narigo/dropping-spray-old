@@ -87,9 +87,9 @@ function render() {
     isDrawing = spray.draw(drawer);
   }
 
-  [].forEach.call(autoSprays, function (autoSpray) {
-    isDrawing = autoSpray.draw(drawer) || isDrawing;
-  });
+  for (var i = autoSprays.length - 1; i >= 0; i--) {
+    isDrawing = autoSprays[i].draw(drawer) || isDrawing;
+  }
 
   if (isDrawing) {
     requestAnimationFrame(render);
@@ -184,6 +184,7 @@ function setupForm() {
   });
 
   document.getElementById('autoSpray').addEventListener('click', function () {
+    var speed = autoSpraySpeed;
     var autoSprayCoords = {
       x : 0,
       y : Math.floor(Math.random() * canvas.height)
@@ -199,7 +200,7 @@ function setupForm() {
     }
 
     function sprayFromLeftToRight(drawer) {
-      autoSprayCoords.x = autoSprayCoords.x + Math.round(Math.random() * Math.max(0, autoSpraySpeed));
+      autoSprayCoords.x = autoSprayCoords.x + Math.round(Math.random() * Math.max(0, speed));
       autoSprayCoords.y =
         Math.max(0, Math.min(canvas.height - 1, (autoSprayCoords.y + Math.floor(Math.random() * 3) - 1)));
       if (autoSprayCoords.x < canvas.width) {

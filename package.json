@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "description": "A spray that drops",
   "scripts": {
-    "build": "browserify src/main.js -o bundle.js"
+    "build": "browserify src/main.js -o bundle.js",
+    "test": "node_modules/karma/bin/karma start"
   },
   "repository": {
     "type": "git",
