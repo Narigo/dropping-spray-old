@@ -10,7 +10,7 @@ describe('Spray', function () {
     height : 1000
   };
   var spray = new Spray({
-    size: spraySize,
+    size : spraySize,
     splatterAmount : splatterAmount,
     dropThreshold : dropThreshold,
     canvas : canvas
@@ -21,12 +21,16 @@ describe('Spray', function () {
     DrawerMock = (function () {
       var circles = 0;
       var lines = 0;
+      var maxLineSize = 0;
       return {
         drawShapes : function (shapes) {
           if (shapes.shape === 'circle') {
             circles += shapes.shapes.length;
           } else if (shapes.shape === 'line') {
             lines += shapes.shapes.length;
+            for (var i = 0; i < shapes.shapes.length; i++) {
+              maxLineSize = Math.max(maxLineSize, shapes.shapes[i].size);
+            }
           }
         },
         amountOfCircles : function () {
@@ -34,6 +38,9 @@ describe('Spray', function () {
         },
         amountOfLines : function () {
           return lines;
+        },
+        maxSizeOfLines : function () {
+          return maxLineSize;
         }
       };
     }());
@@ -64,10 +71,18 @@ describe('Spray', function () {
     });
 
     var i;
-    for (i = 0; i <= dropThreshold / spraySize; i++) {
+    for (i = 0; i < (dropThreshold / spraySize) + 1; i++) {
       mySpray.draw(DrawerMock, {x : 500, y : 500});
     }
     expect(DrawerMock.amountOfLines()).toBe(1);
   });
 
+  it('should not draw lines that are bigger than the drop threshold (the amount of spray needed to drop)', function () {
+    var i;
+    for (i = 0; i <= dropThreshold / spraySize; i++) {
+      spray.draw(DrawerMock, {x : 500, y : 500});
+    }
+    expect(DrawerMock.amountOfLines() >= 1).toBeTruthy();
+    expect(DrawerMock.maxSizeOfLines() <= dropThreshold);
+  });
 });
