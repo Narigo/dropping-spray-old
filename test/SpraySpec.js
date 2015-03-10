@@ -82,7 +82,36 @@ describe('Spray', function () {
     for (i = 0; i <= dropThreshold / spraySize; i++) {
       spray.draw(DrawerMock, {x : 500, y : 500});
     }
-    expect(DrawerMock.amountOfLines() >= 1).toBeTruthy();
     expect(DrawerMock.maxSizeOfLines() <= dropThreshold);
+  });
+
+  it('should draw multiple lines after hitting the drop threshold', function () {
+    var i;
+    for (i = 0; i <= dropThreshold / spraySize; i++) {
+      spray.draw(DrawerMock, {x : 500, y : 500});
+    }
+    expect(DrawerMock.amountOfLines() >= 1).toBeTruthy();
+  });
+
+  it('should draw without problems at the edge cases', function () {
+    var i = 0;
+    spray.draw(DrawerMock, {x : 0, y : 0});
+    i++;
+    spray.draw(DrawerMock, {x : 0, y : 500});
+    i++;
+    spray.draw(DrawerMock, {x : 0, y : 1000});
+    i++;
+    spray.draw(DrawerMock, {x : 500, y : 1000});
+    i++;
+    spray.draw(DrawerMock, {x : 500, y : 0});
+    i++;
+    spray.draw(DrawerMock, {x : 1000, y : 0});
+    i++;
+    spray.draw(DrawerMock, {x : 1000, y : 500});
+    i++;
+    spray.draw(DrawerMock, {x : 1000, y : 1000});
+    i++;
+
+    expect(DrawerMock.amountOfCircles()).toBe((splatterAmount + 1) * i);
   });
 });

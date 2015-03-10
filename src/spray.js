@@ -153,8 +153,8 @@ function Spray(options) {
   }
 
   function sprayAt(x, y) {
-    var xArea = Math.max(0, Math.floor(x / size));
-    var yArea = Math.max(0, Math.floor(y / size));
+    var xArea = Math.max(0, Math.floor(x / size) - 1);
+    var yArea = Math.max(0, Math.floor(y / size) - 1);
     var drop = drops[xArea][yArea];
     if (dropper) {
       drop.count += size;
