@@ -17,12 +17,15 @@ function PixiDrawer(canvas) {
   canvas.width = maxWidth;
   canvas.height = maxHeight;
 
-  var renderer = PIXI.autoDetectRenderer(maxWidth, maxHeight, {view : canvas});
-  renderer.backgroundColor = 0xFFFFFF;
+  console.log(maxWidth, maxHeight, canvas);
+  var renderer = PIXI.autoDetectRenderer(maxWidth, maxHeight, {view : canvas, antialias : true});
+  renderer.backgroundColor = 0xFF00FF;
 
   var stage = new PIXI.Container();
-  stage.interactive = true;
-  stage.hitArea = new PIXI.Rectangle(0, 0, maxWidth, maxHeight);
+
+  var graphics = new PIXI.Graphics();
+  stage.addChild(graphics);
+  renderer.render(stage);
 
   return {
     drawShapes : drawShapes,
@@ -30,31 +33,39 @@ function PixiDrawer(canvas) {
   };
 
   function clearCanvas() {
-    stage.clear();
+    graphics.clear();
+    renderer.render(stage);
   }
 
   function drawShapes(shapesToRender) {
-    var color, i, shape, shapes;
-    var graphics = new PIXI.Graphics();
-    stage.addChild(graphics);
+    var color, i, shape, shapes, size, x, y;
 
     if (!shapesToRender.isEmpty()) {
       shapes = shapesToRender.shapes;
       color = shapesToRender.color.r * 255 * 255 + shapesToRender.color.g * 255 + shapesToRender.color.b;
       if (shapesToRender.shape === 'line') {
+        console.log('drawing ', shapes.length, ' lines in', color, '.');
         for (i = shapes.length - 1; i >= 0; i--) {
           shape = shapes[i];
-          graphics.lineStyle(color, shape.size);
+          graphics.lineStyle(shape.size, color, 1);
           graphics.drawCircle(shape.x0, shape.y0, shape.size);
           graphics.moveTo(shape.x0, shape.y0);
           graphics.lineTo(shape.x1, shape.y1);
           graphics.drawCircle(shape.x1, shape.y1, shape.size);
         }
       } else if (shapesToRender.shape === 'circle') {
+        console.log('drawing ', shapes.length, ' circles in', color, '.');
+        graphics.beginFill(color, 1);
         for (i = shapes.length - 1; i >= 0; i--) {
           shape = shapes[i];
-          graphics.drawCircle(shape.x, shape.y, shape.radius);
+          x = Math.round(shape.x);
+          y = Math.round(shape.y);
+          size = Math.max(1, Math.round(shape.radius));
+          graphics.moveTo(x, y);
+          console.log('drawing ', x, y, size);
+          graphics.drawCircle(x, y, size);
         }
+        graphics.endFill();
       }
 
       renderer.render(stage);
