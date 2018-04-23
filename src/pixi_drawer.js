@@ -41,7 +41,6 @@ function PixiDrawer(canvas) {
 
     if (!shapesToRender.isEmpty()) {
       shapes = shapesToRender.shapes;
-      console.log(shapesToRender);
       color = shapesToRender.color.r * 255 * 255 + shapesToRender.color.g * 255 + shapesToRender.color.b;
       if (shapesToRender.shape === "line") {
         for (i = shapes.length - 1; i >= 0; i--) {
@@ -67,7 +66,6 @@ function PixiDrawer(canvas) {
         }
       }
 
-      console.log("rerendering stage");
       renderer.render(stage);
     }
   }
