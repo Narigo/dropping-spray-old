@@ -1,10 +1,11 @@
 describe('The pixi painter', function () {
 
-  var PixiDrawer = require('../src/pixi_drawer.js');
-  var Shapes = require('../src/draw_shapes.js');
+  var PixiDrawer = require('../src/lib/pixi_drawer.js');
+  var Shapes = require('../src/lib/draw_shapes.js');
   var canvas = document.createElement('canvas');
   canvas.width = 100;
   canvas.height = 100;
+  document.body.appendChild(canvas);
   var painter = new PixiDrawer(canvas);
 
   it('should be able to draw a single line', function () {

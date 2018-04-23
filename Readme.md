@@ -4,11 +4,31 @@ Finally a spray that drops when spraying too much on the same spot.
 
 See [a live demo](https://narigo.github.io/dropping-spray).
 
-## Building
-
-To build the demo, run `npm run build`.
-
 ## Usage
+
+You can use this module in two ways:
+
+1. Use the `createCanvasSpray` function and provide a canvas element and your options or
+2. Use it on whatever you like with your own `Drawer` object. You need to do the plumbing when to draw where though.
+
+If you just want to let users draw with drops in your web application, it is recommended use the `createCanvasSpray` 
+function.
+
+### Using `createCanvasSpray`
+
+```
+const { createCanvasSpray } = require("dropping-spray");
+const myCanvas = document.getElementById("my-canvas");
+
+const options = {}; // You can customize the spray by providing [options](#customizing-spray-options)
+
+const spray = createCanvasSpray(myCanvas, options);
+
+// if you want to stop spraying and clean up the event handlers, use this line:
+spray.destroy();
+```
+
+### Using the generic `Spray`
 
 First of all, you need to decide what the spray should look like. There are a few customization possibilities that you
 can provide. Below you can see the default options, which will be set if you don't provide an object or leave out fields
@@ -16,27 +36,8 @@ inside of it:
 
 ```
 var Spray = require('./spray.js');
-var spray = new Spray({
-  color : {            // the color of the spray
-    r : 0,             // red
-    g : 0,             // green
-    b : 255            // blue
-  },
-
-  size : 5,            // the size of the center circle that will always be filled
-
-  splatterAmount : 10, // the amount of circles it draws in each step (usually during `requestAnimationFrame`)
-
-  splatterRadius : 20, // the radius of the spray 20
-
-  dropper : true,      // whether the spray drops (`true`) or not (`false`)
-
-  dropThreshold : 50,  // when the spray should start to drop - it accumulates the amount of spray inside of the size
-                       // and starts to drop when it reaches the threshold. Think of `dropThreshould / size` is the
-                       // amount of `requestAnimationFrame`-calls the spray would need to start dropping.
-
-  dropSpeed : 3        // how fast the drops should flow as soon as they started
-});
+var options = {}; // You can customize the spray by providing [options](#customizing-spray-options)
+var spray = new Spray(options);
 ```
 
 For the spray to know where to draw to, you need to select a drawer. With a drawer, the spray is able to draw on
@@ -73,6 +74,35 @@ function render() {
 }
 ```
 
+### Customizing spray options
+
+You can customize most of how the spray works by changing the `options` parameter and provide them to the spray as
+mentioned in the usage examples. Here are the default values which will be set if you do not provide a field in your
+`options` object.
+
+```
+{
+  color : {            // the color of the spray
+    r : 0,             // red
+    g : 0,             // green
+    b : 255            // blue
+  },
+
+  size : 5,            // the size of the center circle that will always be filled
+
+  splatterAmount : 10, // the amount of circles it draws in each step (usually during `requestAnimationFrame`)
+
+  splatterRadius : 20, // the radius of the spray
+
+  dropper : true,      // whether the spray drops (`true`) or not (`false`)
+
+  dropThreshold : 50,  // when the spray should start to drop - it accumulates the amount of spray inside of the size
+                       // and starts to drop when it reaches the threshold. Think of `dropThreshould / size` is the
+                       // amount of `requestAnimationFrame`-calls the spray would need to start dropping.
+
+  dropSpeed : 3        // how fast the drops should flow as soon as they started
+}
+```
 
 ### Full example
 
@@ -117,3 +147,8 @@ function render() {
 
 requestAnimationFrame(render);
 ```
+
+## Building
+
+To build the demo, run `npm run build`.
+

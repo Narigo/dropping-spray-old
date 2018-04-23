@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "A spray that drops",
   "scripts": {
-    "build": "browserify src/main.js -o bundle.js",
+    "build": "browserify src/demo.js -o bundle.js",
     "test": "node_modules/karma/bin/karma start"
   },
   "repository": {
@@ -29,6 +29,7 @@
     "karma-browserify": "^5.2.0",
     "karma-chrome-launcher": "^2.2.0",
     "karma-jasmine": "^1.1.1",
-    "pixi.js": "^4.7.3"
+    "pixi.js": "^4.7.3",
+    "watchify": "^3.11.0"
   }
 }

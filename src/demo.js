@@ -1,11 +1,9 @@
-var Spray = require('./spray.js');
-//var CanvasDrawer = require('./canvas_drawer.js');
-var PixiDrawer = require('./pixi_drawer.js');
+var Spray = require('./lib/spray.js');
+// var Drawer = require('./lib/canvas_drawer.js');
+var Drawer = require('./lib/pixi_drawer.js');
 
 var canvas = document.getElementById('spray1');
-//var drawer = new CanvasDrawer(canvas);
-var drawer = new PixiDrawer(canvas);
-
+var drawer = new Drawer(canvas);
 
 var spray;
 var spraying = false;
@@ -30,13 +28,10 @@ var options = require('./options.js')('options', canvas, drawer, createSpray, re
 window.addEventListener('resize', resize);
 resize();
 
-canvas.addEventListener('mousedown', startEventCanvas);
-canvas.addEventListener('mousemove', moveEventCanvas);
-canvas.addEventListener('touchstart', startEventCanvas);
-canvas.addEventListener('touchmove', moveEventCanvas);
+canvas.addEventListener('pointerdown', startEventCanvas);
+canvas.addEventListener('pointermove', moveEventCanvas);
 
-document.addEventListener('mouseup', stopSpraying);
-document.addEventListener('touchend', stopSpraying);
+document.addEventListener('pointerup', stopSpraying);
 
 options.setupOptions();
 options.setupForm();

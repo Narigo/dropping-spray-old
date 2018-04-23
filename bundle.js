@@ -40852,68 +40852,12 @@ module.exports = {
 };
 
 },{}],190:[function(require,module,exports){
-function Circles(red, green, blue) {
-  var that = this;
-  this.shape = 'circle';
-  this.color = {
-    r : red,
-    g : green,
-    b : blue
-  };
-  this.shapes = [];
-  this.isEmpty = function () {
-    return that.shapes.length === 0;
-  };
-}
-
-function Lines(red, green, blue) {
-  var that = this;
-  this.shape = 'line';
-  this.color = {
-    r : red,
-    g : green,
-    b : blue
-  };
-  this.shapes = [];
-  this.isEmpty = function () {
-    return that.shapes.length === 0;
-  };
-}
-
-function circle(x, y, radius) {
-  return {
-    x : x,
-    y : y,
-    radius : radius
-  };
-}
-
-function line(x0, y0, x1, y1, size) {
-  return {
-    size : size,
-    x0 : x0,
-    y0 : y0,
-    x1 : x1,
-    y1 : y1
-  };
-}
-
-module.exports = {
-  circle : circle,
-  line : line,
-  Circles : Circles,
-  Lines : Lines
-};
-
-},{}],191:[function(require,module,exports){
-var Spray = require('./spray.js');
-//var CanvasDrawer = require('./canvas_drawer.js');
-var PixiDrawer = require('./pixi_drawer.js');
+var Spray = require('./lib/spray.js');
+// var Drawer = require('./lib/canvas_drawer.js');
+var Drawer = require('./lib/pixi_drawer.js');
 
 var canvas = document.getElementById('spray1');
-//var drawer = new CanvasDrawer(canvas);
-var drawer = new PixiDrawer(canvas);
-
+var drawer = new Drawer(canvas);
 
 var spray;
 var spraying = false;
@@ -40938,13 +40882,10 @@ var options = require('./options.js')('options', canvas, drawer, createSpray, re
 window.addEventListener('resize', resize);
 resize();
 
-canvas.addEventListener('mousedown', startEventCanvas);
-canvas.addEventListener('mousemove', moveEventCanvas);
-canvas.addEventListener('touchstart', startEventCanvas);
-canvas.addEventListener('touchmove', moveEventCanvas);
+canvas.addEventListener('pointerdown', startEventCanvas);
+canvas.addEventListener('pointermove', moveEventCanvas);
 
-document.addEventListener('mouseup', stopSpraying);
-document.addEventListener('touchend', stopSpraying);
+document.addEventListener('pointerup', stopSpraying);
 
 options.setupOptions();
 options.setupForm();
@@ -41017,143 +40958,61 @@ function resize() {
   canvas.width = window.innerWidth;
 }
 
-},{"./options.js":192,"./pixi_drawer.js":193,"./spray.js":194}],192:[function(require,module,exports){
-module.exports = function (optionDomId, canvas, drawer, createSpray, resetSpray, autoSprays, triggerRender) {
-
-  var form = document.getElementById(optionDomId);
-
-  function getOptions() {
-    var r = fieldBetween(form.red, 0, 255);
-    var g = fieldBetween(form.green, 0, 255);
-    var b = fieldBetween(form.blue, 0, 255);
-
-    return {
-      color : {
-        r : r,
-        g : g,
-        b : b
-      },
-      canvas : canvas,
-      size : fieldBetween(form.size, 1, Math.min(canvas.height, canvas.width)),
-      splatterAmount : fieldBetween(form.splatterAmount, 0, Infinity),
-      splatterRadius : fieldBetween(form.splatterRadius, 0, Infinity),
-      dropper : !!form.drops.checked,
-      dropThreshold : fieldBetween(form.dropThreshold, 0, Infinity),
-      dropSpeed : fieldBetween(form.dropSpeed, 0, Infinity)
-    };
-
-    function fieldBetween(field, min, max) {
-      var value = Math.max(min, Math.min(max, parseInt(field.value)));
-      field.value = value;
-      return value;
-    }
-  }
-
-  function setupOptions() {
-
-    var hider = document.getElementById('options-hider');
-    var options = document.getElementById('options-content');
-
-    hider.addEventListener('click', toggleOptions);
-
-    var isHidden = false;
-
-    function toggleOptions() {
-      isHidden = !isHidden;
-      if (isHidden) {
-        options.style.display = 'none';
-        hider.innerHTML = 'Open options';
-        hider.classList.add('open');
-      } else {
-        options.style.display = 'block';
-        hider.innerHTML = 'close';
-        hider.classList.remove('open');
-      }
-    }
-
-  }
-
-  function setupForm() {
-    var autoSpraySpeed = parseInt(form.autoSpraySpeed.value);
-
-    form.red.addEventListener('change', resetSpray);
-    form.green.addEventListener('change', resetSpray);
-    form.blue.addEventListener('change', resetSpray);
-    form.size.addEventListener('change', resetSpray);
-    form.splatterAmount.addEventListener('change', resetSpray);
-    form.splatterRadius.addEventListener('change', resetSpray);
-    form.drops.addEventListener('change', resetSpray);
-    form.dropThreshold.addEventListener('change', resetSpray);
-    form.dropSpeed.addEventListener('change', resetSpray);
-    form.autoSpraySpeed.addEventListener('change', function () {
-      autoSpraySpeed = parseInt(form.autoSpraySpeed.value);
-    });
-
-    document.getElementById('clearCanvas').addEventListener('click', function () {
-      resetSpray();
-      [].forEach.call(autoSprays, function (autoSpray) {
-        autoSpray.spray.stopDrops();
-        autoSpray.spray.resetDrops();
-      });
-      drawer.clear();
-    });
-
-    document.getElementById('autoSprayStop').addEventListener('click', function () {
-      [].forEach.call(autoSprays, function (autoSpray) {
-        autoSpray.spray.stopDrops();
-      });
-      autoSprays = [];
-    });
-
-    document.getElementById('randomColor').addEventListener('click', function () {
-      randomizeColor();
-      resetSpray();
-    });
-
-    document.getElementById('autoSpray').addEventListener('click', function () {
-      var speed = autoSpraySpeed;
-      var autoSprayCoords = {
-        x : 0,
-        y : Math.floor(Math.random() * canvas.height)
-      };
-      var autoSpray = {
-        draw : sprayFromLeftToRight,
-        spray : createSpray()
-      };
-      autoSprays.push(autoSpray);
-      triggerRender();
-
-      function sprayFromLeftToRight(drawer) {
-        autoSprayCoords.x = autoSprayCoords.x + Math.round(Math.random() * Math.max(0, speed));
-        autoSprayCoords.y =
-          Math.max(0, Math.min(canvas.height - 1, (autoSprayCoords.y + Math.floor(Math.random() * 3) - 1)));
-        if (autoSprayCoords.x < canvas.width) {
-          autoSpray.spray.draw(drawer, autoSprayCoords);
-          return true;
-        } else {
-          autoSprays.splice(autoSprays.indexOf(autoSpray), 1);
-          return false;
-        }
-      }
-    });
-
-    function randomizeColor() {
-      form.red.value = Math.round(Math.random() * 255);
-      form.green.value = Math.round(Math.random() * 255);
-      form.blue.value = Math.round(Math.random() * 255);
-    }
-
-    randomizeColor();
-  }
-
-  return {
-    getOptions : getOptions,
-    setupOptions : setupOptions,
-    setupForm : setupForm
+},{"./lib/pixi_drawer.js":192,"./lib/spray.js":193,"./options.js":194}],191:[function(require,module,exports){
+function Circles(red, green, blue) {
+  var that = this;
+  this.shape = 'circle';
+  this.color = {
+    r : red,
+    g : green,
+    b : blue
   };
+  this.shapes = [];
+  this.isEmpty = function () {
+    return that.shapes.length === 0;
+  };
+}
+
+function Lines(red, green, blue) {
+  var that = this;
+  this.shape = 'line';
+  this.color = {
+    r : red,
+    g : green,
+    b : blue
+  };
+  this.shapes = [];
+  this.isEmpty = function () {
+    return that.shapes.length === 0;
+  };
+}
+
+function circle(x, y, radius) {
+  return {
+    x : x,
+    y : y,
+    radius : radius
+  };
+}
+
+function line(x0, y0, x1, y1, size) {
+  return {
+    size : size,
+    x0 : x0,
+    y0 : y0,
+    x1 : x1,
+    y1 : y1
+  };
+}
+
+module.exports = {
+  circle : circle,
+  line : line,
+  Circles : Circles,
+  Lines : Lines
 };
 
-},{}],193:[function(require,module,exports){
+},{}],192:[function(require,module,exports){
 var PIXI = require("pixi.js");
 
 function PixiDrawer(canvas) {
@@ -41201,12 +41060,13 @@ function PixiDrawer(canvas) {
       if (shapesToRender.shape === "line") {
         for (i = shapes.length - 1; i >= 0; i--) {
           shape = shapes[i];
-          lines.lineStyle(shape.size, color, 1);
+          size = Math.max(1, Math.round(shape.size));
+          lines.lineStyle(size, color, 1);
           lines.beginFill(color, 1);
-          lines.drawCircle(shape.x0, shape.y0, shape.size);
+          lines.drawCircle(shape.x0, shape.y0, size / 4);
           lines.moveTo(shape.x0, shape.y0);
           lines.lineTo(shape.x1, shape.y1);
-          lines.drawCircle(shape.x1, shape.y1, shape.size);
+          lines.drawCircle(shape.x1, shape.y1, size / 4);
           lines.endFill();
         }
       } else if (shapesToRender.shape === "circle") {
@@ -41217,7 +41077,7 @@ function PixiDrawer(canvas) {
           size = Math.max(1, Math.round(shape.radius));
           circles.lineStyle(size, color, 1);
           circles.beginFill(color);
-          circles.drawCircle(x, y, size);
+          circles.drawCircle(x, y, size / 2);
           circles.endFill();
         }
       }
@@ -41229,7 +41089,7 @@ function PixiDrawer(canvas) {
 
 module.exports = PixiDrawer;
 
-},{"pixi.js":140}],194:[function(require,module,exports){
+},{"pixi.js":140}],193:[function(require,module,exports){
 var DrawShapes = require('./draw_shapes.js');
 var defaultOptions = {
   color : {
@@ -41418,4 +41278,140 @@ function Spray(options) {
 
 module.exports = Spray;
 
-},{"./draw_shapes.js":190}]},{},[191]);
+},{"./draw_shapes.js":191}],194:[function(require,module,exports){
+module.exports = function (optionDomId, canvas, drawer, createSpray, resetSpray, autoSprays, triggerRender) {
+
+  var form = document.getElementById(optionDomId);
+
+  function getOptions() {
+    var r = fieldBetween(form.red, 0, 255);
+    var g = fieldBetween(form.green, 0, 255);
+    var b = fieldBetween(form.blue, 0, 255);
+
+    return {
+      color : {
+        r : r,
+        g : g,
+        b : b
+      },
+      canvas : canvas,
+      size : fieldBetween(form.size, 1, Math.min(canvas.height, canvas.width)),
+      splatterAmount : fieldBetween(form.splatterAmount, 0, Infinity),
+      splatterRadius : fieldBetween(form.splatterRadius, 0, Infinity),
+      dropper : !!form.drops.checked,
+      dropThreshold : fieldBetween(form.dropThreshold, 0, Infinity),
+      dropSpeed : fieldBetween(form.dropSpeed, 0, Infinity)
+    };
+
+    function fieldBetween(field, min, max) {
+      var value = Math.max(min, Math.min(max, parseInt(field.value)));
+      field.value = value;
+      return value;
+    }
+  }
+
+  function setupOptions() {
+
+    var hider = document.getElementById('options-hider');
+    var options = document.getElementById('options-content');
+
+    hider.addEventListener('click', toggleOptions);
+
+    var isHidden = true;
+
+    function toggleOptions() {
+      isHidden = !isHidden;
+      if (isHidden) {
+        options.style.display = 'none';
+        hider.innerHTML = 'Open options';
+        hider.classList.add('open');
+      } else {
+        options.style.display = 'block';
+        hider.innerHTML = 'close';
+        hider.classList.remove('open');
+      }
+    }
+
+  }
+
+  function setupForm() {
+    var autoSpraySpeed = parseInt(form.autoSpraySpeed.value);
+
+    form.red.addEventListener('change', resetSpray);
+    form.green.addEventListener('change', resetSpray);
+    form.blue.addEventListener('change', resetSpray);
+    form.size.addEventListener('change', resetSpray);
+    form.splatterAmount.addEventListener('change', resetSpray);
+    form.splatterRadius.addEventListener('change', resetSpray);
+    form.drops.addEventListener('change', resetSpray);
+    form.dropThreshold.addEventListener('change', resetSpray);
+    form.dropSpeed.addEventListener('change', resetSpray);
+    form.autoSpraySpeed.addEventListener('change', function () {
+      autoSpraySpeed = parseInt(form.autoSpraySpeed.value);
+    });
+
+    document.getElementById('clearCanvas').addEventListener('click', function () {
+      resetSpray();
+      [].forEach.call(autoSprays, function (autoSpray) {
+        autoSpray.spray.stopDrops();
+        autoSpray.spray.resetDrops();
+      });
+      drawer.clear();
+    });
+
+    document.getElementById('autoSprayStop').addEventListener('click', function () {
+      [].forEach.call(autoSprays, function (autoSpray) {
+        autoSpray.spray.stopDrops();
+      });
+      autoSprays = [];
+    });
+
+    document.getElementById('randomColor').addEventListener('click', function () {
+      randomizeColor();
+      resetSpray();
+    });
+
+    document.getElementById('autoSpray').addEventListener('click', function () {
+      var speed = autoSpraySpeed;
+      var autoSprayCoords = {
+        x : 0,
+        y : Math.floor(Math.random() * canvas.height)
+      };
+      var autoSpray = {
+        draw : sprayFromLeftToRight,
+        spray : createSpray()
+      };
+      autoSprays.push(autoSpray);
+      triggerRender();
+
+      function sprayFromLeftToRight(drawer) {
+        autoSprayCoords.x = autoSprayCoords.x + Math.round(Math.random() * Math.max(0, speed));
+        autoSprayCoords.y =
+          Math.max(0, Math.min(canvas.height - 1, (autoSprayCoords.y + Math.floor(Math.random() * 3) - 1)));
+        if (autoSprayCoords.x < canvas.width) {
+          autoSpray.spray.draw(drawer, autoSprayCoords);
+          return true;
+        } else {
+          autoSprays.splice(autoSprays.indexOf(autoSpray), 1);
+          return false;
+        }
+      }
+    });
+
+    function randomizeColor() {
+      form.red.value = Math.round(Math.random() * 255);
+      form.green.value = Math.round(Math.random() * 255);
+      form.blue.value = Math.round(Math.random() * 255);
+    }
+
+    randomizeColor();
+  }
+
+  return {
+    getOptions : getOptions,
+    setupOptions : setupOptions,
+    setupForm : setupForm
+  };
+};
+
+},{}]},{},[190]);

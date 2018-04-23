@@ -1,10 +1,11 @@
 describe('The canvas painter', function () {
 
-  var CanvasDrawer = require('../src/canvas_drawer.js');
-  var Shapes = require('../src/draw_shapes.js');
+  var CanvasDrawer = require('../src/lib/canvas_drawer.js');
+  var Shapes = require('../src/lib/draw_shapes.js');
   var canvas = document.createElement('canvas');
   canvas.width = 100;
   canvas.height = 100;
+  document.body.appendChild(canvas);
   var painter = new CanvasDrawer(canvas);
 
   it('should be able to draw a single line', function () {

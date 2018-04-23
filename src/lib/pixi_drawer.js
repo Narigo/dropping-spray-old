@@ -45,12 +45,13 @@ function PixiDrawer(canvas) {
       if (shapesToRender.shape === "line") {
         for (i = shapes.length - 1; i >= 0; i--) {
           shape = shapes[i];
-          lines.lineStyle(shape.size, color, 1);
+          size = Math.max(1, Math.round(shape.size));
+          lines.lineStyle(size, color, 1);
           lines.beginFill(color, 1);
-          lines.drawCircle(shape.x0, shape.y0, shape.size);
+          lines.drawCircle(shape.x0, shape.y0, size / 4);
           lines.moveTo(shape.x0, shape.y0);
           lines.lineTo(shape.x1, shape.y1);
-          lines.drawCircle(shape.x1, shape.y1, shape.size);
+          lines.drawCircle(shape.x1, shape.y1, size / 4);
           lines.endFill();
         }
       } else if (shapesToRender.shape === "circle") {
@@ -61,7 +62,7 @@ function PixiDrawer(canvas) {
           size = Math.max(1, Math.round(shape.radius));
           circles.lineStyle(size, color, 1);
           circles.beginFill(color);
-          circles.drawCircle(x, y, size);
+          circles.drawCircle(x, y, size / 2);
           circles.endFill();
         }
       }

@@ -1,6 +1,6 @@
 describe('Spray', function () {
 
-  var Spray = require('../src/spray.js');
+  var Spray = require('../src/lib/spray.js');
   var splatterAmount = 33;
   var splatterRadius = 44;
   var dropThreshold = 5;

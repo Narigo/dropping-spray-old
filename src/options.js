@@ -36,7 +36,7 @@ module.exports = function (optionDomId, canvas, drawer, createSpray, resetSpray,
 
     hider.addEventListener('click', toggleOptions);
 
-    var isHidden = false;
+    var isHidden = true;
 
     function toggleOptions() {
       isHidden = !isHidden;
